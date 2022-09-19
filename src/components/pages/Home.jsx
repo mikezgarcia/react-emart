@@ -1,56 +1,43 @@
-import React from "react";
-import Carousel from "react-bootstrap/Carousel";
-// import { NavLink } from "react-router-dom";
+import React, { useEffect } from "react";
+import Hero from "../Hero";
+import Collection from "../Collection";
+import Specials from "../Specials";
+import Banner from "../Banner";
+import Blogs from "../Blogs";
+import Footer from "../Footer";
+import * as actionUser from "../../redux/actions/actionUser";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "../../firebase";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { useDispatch, useSelector } from "react-redux";
+import { bindActionCreators } from "redux";
 
 export default function Home() {
+  const [user] = useAuthState(auth);
+  const [userList] = useCollection(db.collection("users"));
+  const activeUser = useSelector((state) => state.activeUser);
+  const { loginUser } = bindActionCreators(actionUser, useDispatch());
+
+  useEffect(() => {
+    if (user) {
+      loginUser({ email: user.email });
+    } else if (userList?.docs.length !== 0) {
+      userList?.docs.forEach((doc) => {
+        if (doc.data().email === activeUser.email) {
+          loginUser({ id: doc.id, email: doc.data().email });
+        }
+      });
+    }
+  }, [user, userList, activeUser.email]);
+
   return (
-    // <!-- HERO Starts here -->
-    // <!-- ---- Hero ---- -->
-    <Carousel>
-      <Carousel.Item>
-        <img
-          className="d-block w-100"
-          src="https://wallpapercave.com/dwp1x/xUnqj9R.jpg"
-          alt="First slide"
-        />
-        <Carousel.Caption>
-          <h2 class="text-white">Best Collection</h2>
-          <h1 class="text-white py-2 fw-bold">NEW ARRIVALS</h1>
-          <a href="login.html" class="btn">
-            SHOP NOW
-          </a>
-        </Carousel.Caption>
-      </Carousel.Item>
-      <Carousel.Item>
-        <img
-          className="d-block w-100"
-          src="https://wallpapercave.com/dwp1x/fiaiEvV.jpg"
-          alt="Second slide"
-        />
-
-        <Carousel.Caption>
-          <h2 class="text-white">Best Price & Offer</h2>
-          <h1 class="text-white py-2 fw-bold">NEW SEASON</h1>
-          <a href="login.html" class="btn">
-            BUY NOW
-          </a>
-        </Carousel.Caption>
-      </Carousel.Item>
-      <Carousel.Item>
-        <img
-          className="d-block w-100"
-          src="https://wallpapercave.com/dwp1x/p3HjAFU.jpg"
-          alt="Third slide"
-        />
-
-        <Carousel.Caption>
-          <h2 class="text-white">Best Time To Buy</h2>
-          <h1 class="text-white py-2 fw-bold">SUMMER SALE</h1>
-          <a href="login.html" class="btn">
-            GET IT NOW
-          </a>
-        </Carousel.Caption>
-      </Carousel.Item>
-    </Carousel>
+    <>
+      <Hero />
+      <Collection />
+      <Specials />
+      <Banner />
+      <Blogs />
+      <Footer />
+    </>
   );
 }
